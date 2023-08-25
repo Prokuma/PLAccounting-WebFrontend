@@ -22,3 +22,23 @@ export type APIAccountTitle = {
     created_at: string;
     updated_at: string;
 }
+
+export type APITransaction = {
+    transaction_id: number;
+    book_id: string;
+    description: string;
+    sub_transactions: APISubTransaction[];
+    occurred_at: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export type APISubTransaction = {
+    sub_transaction_id: number;
+    is_debit: boolean;
+    account_title_id: number;
+    account_title: APIAccountTitle;
+    amount: number;
+    created_at: string;
+    updated_at: string;
+}

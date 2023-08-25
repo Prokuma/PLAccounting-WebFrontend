@@ -13,13 +13,7 @@
 		ToastNotification,
 		Modal,
 		FluidForm,
-		TextInput,
-		PasswordInput,
-		ComposedModal,
-		ModalHeader,
-		ModalBody,
-		ModalFooter,
-		Form
+		TextInput
 	} from 'carbon-components-svelte';
 	import UserAvatarFilledAlt from 'carbon-icons-svelte/lib/UserAvatarFilledAlt.svelte';
 	import type { CarbonTheme } from 'carbon-components-svelte/types/Theme/Theme.svelte';
