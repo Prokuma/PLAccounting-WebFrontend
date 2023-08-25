@@ -9,7 +9,7 @@
 ## デバッグ環境
 依存パッケージ導入
 ```bash
-`npm install`
+npm install
 ```
 
 実行
