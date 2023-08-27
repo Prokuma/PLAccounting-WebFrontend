@@ -25,7 +25,6 @@
 		user,
 		type ToastNotificationData
 	} from '../store';
-	import { DataCategorical, Label } from 'carbon-icons-svelte';
 
 	let theme: CarbonTheme = 'g90';
 	let isSideNavOpen = false;
