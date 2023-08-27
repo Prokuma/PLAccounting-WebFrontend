@@ -296,7 +296,7 @@
 	getAccountTitles();
 
 	async function getTransactions() {
-		const res = await fetch(`${apiURL}/book/${bookId}/transaction/page/${pages-1}`, {
+		const res = await fetch(`${apiURL}/book/${bookId}/transaction/page/${currentPage-1}`, {
 			credentials: 'include'
 		});
 
