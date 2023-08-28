@@ -13,7 +13,9 @@
 		ToastNotification,
 		Modal,
 		FluidForm,
-		TextInput
+		TextInput,
+		HeaderNav,
+		HeaderNavItem
 	} from 'carbon-components-svelte';
 	import UserAvatarFilledAlt from 'carbon-icons-svelte/lib/UserAvatarFilledAlt.svelte';
 	import type { CarbonTheme } from 'carbon-components-svelte/types/Theme/Theme.svelte';
@@ -25,13 +27,19 @@
 		user,
 		type ToastNotificationData
 	} from '../store';
+	import { goto } from '$app/navigation';
 
 	let theme: CarbonTheme = 'g90';
-	let isSideNavOpen = false;
 	let open = false;
+	let openRegister = false;
 	let email = '';
+	let name = '';
 	let password = '';
-	$: invalidEmail = !/^[a-zA-Zd\.\_\-]+@[a-zA-Zd\.\_\-]+\.[a-zA-Zd\.\_\-]+$/.test(email);
+	$: invalidEmail =
+		!/^[a-zA-Z0-9_+-]+(\.[a-zA-Z0-9_+-]+)*@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.)+[a-zA-Z]{2,}$/.test(
+			email
+		);
+	$: invalidName = name.length < 3;
 	$: invalidPassword = password.length < 6;
 
 	async function login() {
@@ -66,6 +74,41 @@
 			caption: new Date().toLocaleString(),
 			timeout: 3000
 		} as ToastNotificationData);
+
+		goto('/book');
+	}
+
+	async function register() {
+		const res = await fetch(`${apiURL}/user`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				email: email,
+				name: name,
+				password: password
+			})
+		});
+
+		if (!res.ok) {
+			addToastNotification({
+				type: 'error',
+				title: '登録に失敗しました',
+				subtitle: `登録に失敗しました: ${res.formData().toString()}`,
+				caption: new Date().toLocaleString(),
+				timeout: 3000
+			} as ToastNotificationData);
+			return;
+		}
+
+		addToastNotification({
+			type: 'success',
+			title: '仮登録に成功しました',
+			subtitle: '確認メールを送信しました',
+			caption: new Date().toLocaleString(),
+			timeout: 3000
+		} as ToastNotificationData);
 	}
 
 	async function logout() {
@@ -90,33 +133,32 @@
 			caption: new Date().toLocaleString(),
 			timeout: 3000
 		} as ToastNotificationData);
+
+		goto('/');
 	}
 </script>
 
 <Theme bind:theme />
 
-<Header persistentHamburgerMenu={true} platformName="PLAccounting" bind:isSideNavOpen>
+<Header persistentHamburgerMenu={false} platformName="PLAccounting">
 	<svelte:fragment slot="skip-to-content">
 		<SkipToContent />
 	</svelte:fragment>
+	<HeaderNav>
+		<HeaderNavItem href="/">ホーム</HeaderNavItem>
+		<HeaderNavItem href="/book">帳簿リスト</HeaderNavItem>
+	</HeaderNav>
 	<HeaderUtilities>
 		<OverflowMenu flipped icon={UserAvatarFilledAlt}>
 			{#if $user != null}
-				<OverflowMenuItem on:click={() => logout()}>Logout</OverflowMenuItem>
+				<OverflowMenuItem on:click={() => logout()}>ログアウト</OverflowMenuItem>
 			{:else}
-				<OverflowMenuItem on:click={() => (open = true)}>Login</OverflowMenuItem>
-				<OverflowMenuItem href="/">Register</OverflowMenuItem>
+				<OverflowMenuItem on:click={() => (open = true)}>ログイン</OverflowMenuItem>
+				<OverflowMenuItem on:click={() => (openRegister = true)}>登録</OverflowMenuItem>
 			{/if}
 		</OverflowMenu>
 	</HeaderUtilities>
 </Header>
-
-<SideNav bind:isOpen={isSideNavOpen}>
-	<SideNavItems>
-		<SideNavLink href="/">Home</SideNavLink>
-		<SideNavLink href="/book">Books</SideNavLink>
-	</SideNavItems>
-</SideNav>
 
 <Modal
 	hasForm
@@ -142,8 +184,8 @@
 			invalidText="メールアドレスの形式が正しくありません"
 			bind:value={email}
 			id="email"
-			labelText="Email"
-			placeholder="Email"
+			labelText="メール"
+			placeholder="example@example.com"
 			type="email"
 		/>
 		<TextInput
@@ -151,8 +193,57 @@
 			bind:invalid={invalidPassword}
 			invalidText="パスワードは6文字以上である必要があります"
 			bind:value={password}
-			labelText="Password"
-			placeholder="Password"
+			labelText="パスワード"
+			placeholder="Password1234!!!"
+			type="password"
+		/>
+	</FluidForm>
+</Modal>
+
+<Modal
+	hasForm
+	bind:open={openRegister}
+	primaryButtonText="登録"
+	secondaryButtonText="キャンセル"
+	selectorPrimaryFocus="#regist_email"
+	modalHeading="登録"
+	size="lg"
+	on:click:button--secondary={() => (openRegister = false)}
+	primaryButtonDisabled={invalidEmail || invalidPassword}
+	on:open
+	on:close
+	on:submit={() => {
+		register();
+		openRegister = false;
+	}}
+>
+	<FluidForm>
+		<TextInput
+			required
+			bind:invalid={invalidEmail}
+			invalidText="メールアドレスの形式が正しくありません"
+			bind:value={email}
+			id="regist_email"
+			labelText="メールアドレス"
+			placeholder="example@example.com"
+			type="email"
+		/>
+		<TextInput
+			required
+			bind:invalid={invalidName}
+			invalidText="名前は3文字以上である必要があります"
+			bind:value={name}
+			labelText="氏名"
+			placeholder="田中太郎"
+			type="text"
+		/>
+		<TextInput
+			required
+			bind:invalid={invalidPassword}
+			invalidText="パスワードは6文字以上である必要があります"
+			bind:value={password}
+			labelText="パスワード"
+			placeholder="Password1234!!!"
 			type="password"
 		/>
 	</FluidForm>
