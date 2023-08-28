@@ -152,6 +152,12 @@
 <Grid>
 	<Row>
 		<Column>
+			<h2>帳簿リスト</h2>
+		</Column>
+	</Row>
+	<br />
+	<Row>
+		<Column>
 			{#if !isListLoaded}
 				<DataTableSkeleton {headers} rows={5} />
 			{:else}

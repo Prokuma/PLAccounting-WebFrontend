@@ -271,6 +271,7 @@
 				timeout: 3000,
 				caption: new Date().toLocaleString()
 			} as ToastNotificationData);
+			goto('/book');
 			return;
 		}
 
@@ -361,7 +362,7 @@
 					amount: title.amount,
 					amount_base: title.amount_base
 				});
-			} else if (title.type == 2) {
+			} else if (title.type == 10) {
 				newLossRows.push({
 					id: title.title_id,
 					title_id: title.title_id,
@@ -369,7 +370,7 @@
 					amount: title.amount,
 					amount_base: title.amount_base
 				});
-			} else if (title.type == 3) {
+			} else if (title.type == 11) {
 				newProfitRows.push({
 					id: title.title_id,
 					title_id: title.title_id,
@@ -395,8 +396,24 @@
 			amount_base: ''
 		});
 
+		newLossRows.push({
+			id: uuidv4(),
+			title_id: 'non_operating_expenses',
+			name: '仕入費用',
+			amount: '',
+			amount_base: ''
+		});
+
+		newProfitRows.push({
+			id: uuidv4(),
+			title_id: 'non_operating_revenues',
+			name: '営業外利益',
+			amount: '',
+			amount_base: ''
+		});
+
 		data.account_titles.forEach((title) => {
-			if (title.type == 4) {
+			if (title.type == 2) {
 				newAssetRows.push({
 					id: title.title_id,
 					title_id: title.title_id,
@@ -405,8 +422,26 @@
 					amount: title.amount,
 					amount_base: title.amount_base
 				});
-			} else if (title.type == 5) {
+			} else if (title.type == 3) {
 				newLiabilityRows.push({
+					id: title.title_id,
+					title_id: title.title_id,
+					name: '　　' + title.name,
+					type: title.type,
+					amount: title.amount,
+					amount_base: title.amount_base
+				});
+			} else if (title.type == 12) {
+				newLossRows.push({
+					id: title.title_id,
+					title_id: title.title_id,
+					name: '　　' + title.name,
+					type: title.type,
+					amount: title.amount,
+					amount_base: title.amount_base
+				});
+			} else if (title.type == 15) {
+				newProfitRows.push({
 					id: title.title_id,
 					title_id: title.title_id,
 					name: '　　' + title.name,
@@ -425,9 +460,64 @@
 			amount_base: ''
 		});
 
+		newLossRows.push({
+			id: uuidv4(),
+			title_id: 'non_operating_expenses',
+			name: '特別損失',
+			amount: '',
+			amount_base: ''
+		});
+
+		newProfitRows.push({
+			id: uuidv4(),
+			title_id: 'non_operating_revenues',
+			name: '特別利益',
+			amount: '',
+			amount_base: ''
+		});
+
 		data.account_titles.forEach((title) => {
-			if (title.type == 7) {
+			if (title.type == 5) {
 				newLiabilityRows.push({
+					id: title.title_id,
+					title_id: title.title_id,
+					name: '　　' + title.name,
+					type: title.type,
+					amount: title.amount,
+					amount_base: title.amount_base
+				});
+			} else if (title.type == 16) {
+				newProfitRows.push({
+					id: title.title_id,
+					title_id: title.title_id,
+					name: '　　' + title.name,
+					type: title.type,
+					amount: title.amount,
+					amount_base: title.amount_base
+				});
+			} else if (title.type == 17) {
+				newLossRows.push({
+					id: title.title_id,
+					title_id: title.title_id,
+					name: '　　' + title.name,
+					type: title.type,
+					amount: title.amount,
+					amount_base: title.amount_base
+				});
+			}
+		});
+
+		newLossRows.push({
+			id: uuidv4(),
+			title_id: 'non_operating_expenses',
+			name: '税金',
+			amount: '',
+			amount_base: ''
+		});
+
+		data.account_titles.forEach((title) => {
+			if (title.type == 18) {
+				newLossRows.push({
 					id: title.title_id,
 					title_id: title.title_id,
 					name: '　　' + title.name,
@@ -509,9 +599,10 @@
 					if (typeof current.amount != 'string') {
 						return prev + current.amount;
 					}
+					return prev;
 				}, 0),
 				liability: '負債合計',
-				liability_amount: newBalanceSheetRows.reduce((prev, current) => {
+				liability_amount: newLiabilityRows.reduce((prev, current) => {
 					if (typeof current.amount != 'string') {
 						return prev + current.amount;
 					}
@@ -646,7 +737,7 @@
 			<h3>貸借対照表</h3>
 		</Column>
 		<Column>
-			<h3>損益計算書</h3>
+			<h3>収支表</h3>
 		</Column>
 	</Row>
 	<br />
@@ -762,11 +853,20 @@
 <Modal
 	hasForm
 	bind:open
+	preventCloseOnClickOutside
 	primaryButtonText="追加"
 	secondaryButtonText="キャンセル"
 	selectorPrimaryFocus="#date"
 	modalHeading="仕訳追加"
 	size="lg"
+	primaryButtonDisabled={
+		selectedDebitTitles.includes(0) ||
+		selectedCreditTitles.includes(0) ||
+		debitAmounts.includes(0) ||
+		creditAmounts.includes(0) ||
+		description == '' ||
+		date == ''
+	}
 	on:click:button--secondary={() => (open = false)}
 	on:open
 	on:close
@@ -777,9 +877,11 @@
 >
 	<Form on:submit>
 		<FormGroup>
-			<DatePicker datePickerType="single" dateFormat="Y/m/d" on:change>
+			<DatePicker datePickerType="single" locale="ja" dateFormat="Y/m/d" on:change={(e)=>(date=(typeof e.detail == 'string') ? e.detail : (typeof e.detail.dateStr == 'string') ? e.detail.dateStr : e.detail.dateStr.from)}>
 				<DatePickerInput
 					id="date"
+					invalid={date == ''}
+					invalidText="日付を入力してください"
 					labelText="日付"
 					placeholder="yyyy/mm/dd"
 					type="date"
@@ -790,6 +892,8 @@
 			<br />
 			<TextInput
 				id="description"
+				invalid={description == ''}
+				invalidText="摘要を入力してください"
 				labelText="摘要"
 				placeholder="摘要"
 				type="text"
@@ -817,6 +921,8 @@
 					<Column>
 						<Dropdown
 							titleText="勘定科目"
+							invalid={selectedDebitTitles[index] == 0}
+							invalidText="選択してください"
 							selectedId={selectedDebitTitles[index]}
 							items={[
 								...accountTitles
@@ -872,11 +978,13 @@
 					<Column>
 						<Dropdown
 							titleText="勘定科目"
+							invalid={selectedCreditTitles[index] == 0}
+							invalidText="選択してください"
 							selectedId={selectedCreditTitles[index]}
 							items={[
 								...accountTitles
 									.filter((title) =>
-										title.type == 2 || title.type == 3
+										title.type > 9 
 											? title.type % 2 == 1
 											: true
 									)
@@ -912,6 +1020,8 @@
 
 <Modal
 	hasForm
+	preventCloseOnClickOutside
+	primaryButtonDisabled={addAccountTitleName == ''}	
 	bind:open={openAccountTitle}
 	primaryButtonText="追加"
 	secondaryButtonText="キャンセル"
@@ -930,6 +1040,8 @@
 		<FormGroup>
 			<TextInput
 				id="name"
+				invalid={addAccountTitleName == ''}
+				invalidText="名前を入力してください"
 				labelText="名前"
 				placeholder="名前"
 				type="text"
@@ -942,11 +1054,17 @@
 				items={[
 					{ id: 0, text: '流動資産' },
 					{ id: 1, text: '流動負債' },
-					{ id: 2, text: '営業費用' },
-					{ id: 3, text: '営業利益' },
-					{ id: 4, text: '固定資産' },
-					{ id: 5, text: '固定負債' },
-					{ id: 7, text: '資本' }
+					{ id: 2, text: '固定資産' },
+					{ id: 3, text: '固定負債' },
+					{ id: 5, text: '資本' },
+					{ id: 10, text: '営業費用' },
+					{ id: 11, text: '営業利益' },
+					{ id: 12, text: '仕入費用' },
+					{ id: 14, text: '営業外費用' },
+					{ id: 15, text: '営業外利益' },
+					{ id: 16, text: '特別損失' },
+					{ id: 17, text: '特別利益' },
+					{ id: 18, text: '税金' }
 				]}
 				on:select={(e) => {
 					selectedAddAccountTitleType = e.detail.selectedId;
