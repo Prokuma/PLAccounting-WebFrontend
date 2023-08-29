@@ -1,8 +1,9 @@
 import { writable } from "svelte/store";
 import { v4 as uuidv4 } from 'uuid';
 import type { APIUser } from "./apitype";
+import { PUBLIC_API_ADDR } from "$env/static/public";
 
-export const apiURL = 'http://localhost:3000/api/v1';
+export const apiURL = `${PUBLIC_API_ADDR}/api/v1`;
 export const accountTitleTypeString = ['資産', '負債', '支出', '収入'];
 
 export type ToastNotificationData = {
