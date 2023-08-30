@@ -68,6 +68,36 @@
 		goto(`/book/${row.detail.id}`);
 	}
 
+	async function deleteBook() {
+		selectedRowIds.forEach(async (id) => {
+			const res = await fetch(`${apiURL}/book/${id}`, {
+				method: 'DELETE',
+				credentials: 'include'
+			});
+
+			if (!res.ok) {
+				addToastNotification({
+					type: 'error',
+					title: '帳簿削除に失敗しました',
+					subtitle: '帳簿削除に失敗しました',
+					timeout: 3000,
+					caption: new Date().toLocaleString()
+				} as ToastNotificationData);
+				return;
+			}
+		});
+
+		addToastNotification({
+			type: 'success',
+			title: '帳簿削除に成功しました',
+			subtitle: '帳簿削除に成功しました',
+			timeout: 3000,
+			caption: new Date().toLocaleString()
+		} as ToastNotificationData);
+
+		getBooks();
+	}
+
 	async function getBooks() {
 		const res = await fetch(`${apiURL}/book`, {
 			method: 'GET',
@@ -170,7 +200,7 @@
 				>
 					<Toolbar>
 						<ToolbarBatchActions bind:active on:cancel={() => (active = false)}>
-							<Button icon={TrashCan} />
+							<Button icon={TrashCan} on:click={() => {deleteBook();active = false;}}/>
 						</ToolbarBatchActions>
 						<ToolbarContent>
 							<Button icon={Edit} on:click={() => (active = true)} />

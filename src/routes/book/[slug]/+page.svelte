@@ -225,6 +225,7 @@
 				book_id: bookId,
 				name: addAccountTitleName,
 				type: selectedAddAccountTitleType,
+				amount: addAccountTitleAmountBase,
 				amount_base: addAccountTitleAmountBase
 			})
 		});
