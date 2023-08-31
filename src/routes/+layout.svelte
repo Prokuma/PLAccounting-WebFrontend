@@ -135,6 +135,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>PLAccounting</title>
+</svelte:head>
+
 <Theme bind:theme />
 
 <Header persistentHamburgerMenu={false} platformName="PLAccounting">

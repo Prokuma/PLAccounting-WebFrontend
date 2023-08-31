@@ -119,6 +119,10 @@
 			return;
 		}
 
+		const occurredAtDate = new Date(date);
+		const diff = occurredAtDate.getTimezoneOffset() * 60 * 1000;
+		const occurredAt = new Date(occurredAtDate.getTime() - diff).toISOString();
+
 		const res = await fetch(`${apiURL}/book/${bookId}/transaction`, {
 			credentials: 'include',
 			method: 'POST',
@@ -128,7 +132,7 @@
 			body: JSON.stringify({
 				book_id: bookId,
 				description: description,
-				occured_at: new Date(date).toISOString(),
+				occured_at: occurredAt,
 				sub_transactions: [
 					...debitAmounts.map((amount, index) => {
 						return {
@@ -225,6 +229,7 @@
 				book_id: bookId,
 				name: addAccountTitleName,
 				type: selectedAddAccountTitleType,
+				amount: addAccountTitleAmountBase,
 				amount_base: addAccountTitleAmountBase
 			})
 		});
@@ -440,7 +445,7 @@
 					amount: title.amount,
 					amount_base: title.amount_base
 				});
-			} else if (title.type == 15) {
+			} else if (title.type == 13) {
 				newProfitRows.push({
 					id: title.title_id,
 					title_id: title.title_id,
@@ -463,7 +468,7 @@
 		newLossRows.push({
 			id: uuidv4(),
 			title_id: 'non_operating_expenses',
-			name: '特別損失',
+			name: '営業外費用',
 			amount: '',
 			amount_base: ''
 		});
@@ -486,7 +491,16 @@
 					amount: title.amount,
 					amount_base: title.amount_base
 				});
-			} else if (title.type == 16) {
+			} else if (title.type == 14) {
+				newLossRows.push({
+					id: title.title_id,
+					title_id: title.title_id,
+					name: '　　' + title.name,
+					type: title.type,
+					amount: title.amount,
+					amount_base: title.amount_base
+				});
+			} else if (title.type == 15) {
 				newProfitRows.push({
 					id: title.title_id,
 					title_id: title.title_id,
@@ -495,7 +509,19 @@
 					amount: title.amount,
 					amount_base: title.amount_base
 				});
-			} else if (title.type == 17) {
+			}
+		});
+
+		newLossRows.push({
+			id: uuidv4(),
+			title_id: 'non_operating_expenses',
+			name: '特別損失',
+			amount: '',
+			amount_base: ''
+		});
+
+		data.account_titles.forEach((title) => {
+			if (title.type == 16) {
 				newLossRows.push({
 					id: title.title_id,
 					title_id: title.title_id,
@@ -1060,10 +1086,10 @@
 					{ id: 10, text: '営業費用' },
 					{ id: 11, text: '営業利益' },
 					{ id: 12, text: '仕入費用' },
+					{ id: 13, text: '営業外利益' },
 					{ id: 14, text: '営業外費用' },
-					{ id: 15, text: '営業外利益' },
+					{ id: 15, text: '特別利益' },
 					{ id: 16, text: '特別損失' },
-					{ id: 17, text: '特別利益' },
 					{ id: 18, text: '税金' }
 				]}
 				on:select={(e) => {
