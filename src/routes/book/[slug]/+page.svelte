@@ -773,6 +773,15 @@
 				<DataTableSkeleton size="short" headers={assetAndLiabilityHeaders} rows={5} />
 			{:else}
 				<DataTable size="short" headers={assetAndLiabilityHeaders} rows={balanceSheetRows}>
+					<svelte:fragment slot="cell" let:row let:cell>
+						{#if (cell.key === "asset_amount" || cell.key === "liability_amount") && typeof cell.value != "string"}
+							<div style="text-align: right; display: block;">
+								{cell.value.toLocaleString() + "円"}
+							</div>
+						{:else}
+							{cell.value}
+						{/if}
+					</svelte:fragment>
 					<Toolbar size="sm">
 						<ToolbarContent>
 							<Button
@@ -792,6 +801,15 @@
 				<DataTableSkeleton size="short" headers={profitAndLossHeaders} rows={5} />
 			{:else}
 				<DataTable size="short" headers={profitAndLossHeaders} rows={profitAndLossRows}>
+					<svelte:fragment slot="cell" let:row let:cell>
+						{#if (cell.key === "loss_amount" || cell.key === "profit_amount") && typeof cell.value != "string"}
+							<div style="text-align: right; display: block;">
+								{cell.value.toLocaleString() + "円"}
+							</div>
+						{:else}
+							{cell.value}
+						{/if}
+					</svelte:fragment>
 					<Toolbar size="sm">
 						<ToolbarContent>
 							<Button
@@ -826,6 +844,15 @@
 					headers={transactionHeaders}
 					rows={transactionRows}
 				>
+					<svelte:fragment slot="cell" let:row let:cell>
+						{#if (cell.key === "credit" || cell.key === "debit") && typeof cell.value != "string"}
+							<div style="text-align: right; display: block;">
+								{cell.value.toLocaleString() + "円"}
+							</div>
+						{:else}
+							{cell.value}
+						{/if}
+					</svelte:fragment>
 					<Toolbar size="sm">
 						<ToolbarBatchActions
 							bind:active
