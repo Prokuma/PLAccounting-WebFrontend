@@ -25,7 +25,7 @@
 	import type { ToastNotificationData } from '../../../store';
 	import type { APIBook, APIAccountTitle, APITransaction } from '../../../apitype';
 	import type { DataTableRow } from 'carbon-components-svelte/types/DataTable/DataTable.svelte';
-	import { Add, Edit, TrashCan } from 'carbon-icons-svelte';
+	import { Add, ArrowLeft, Edit, Settings, Subtract, TrashCan } from 'carbon-icons-svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 
@@ -51,6 +51,23 @@
 		{ key: 'debit', value: '借方', width: '10%' },
 		{ key: 'credit', value: '貸方', width: '10%' }
 	];
+
+	const bigAccountTitles = [
+					{ id: 0, text: '流動資産' },
+					{ id: 1, text: '流動負債' },
+					{ id: 2, text: '固定資産' },
+					{ id: 3, text: '固定負債' },
+					{ id: 5, text: '資本' },
+					{ id: 10, text: '営業費用' },
+					{ id: 11, text: '営業利益' },
+					{ id: 12, text: '仕入費用' },
+					{ id: 13, text: '営業外利益' },
+					{ id: 14, text: '営業外費用' },
+					{ id: 15, text: '特別利益' },
+					{ id: 16, text: '特別損失' },
+					{ id: 18, text: '税金' }
+				];
+
 	let pages: number = 1;
 	let currentPage: number = 1;
 	let active = false;
@@ -75,6 +92,8 @@
 	let selectedTransactionIds: string[] = [];
 	let selectedDebitTitles: number[] = [0];
 	let selectedCreditTitles: number[] = [0];
+	let selectedBigDebitTitles: number[] = [0];
+	let selectedBigCreditTitles: number[] = [0];
 	let debitAmounts: number[] = [0];
 	let creditAmounts: number[] = [0];
 	let description: string = '';
@@ -104,11 +123,12 @@
 		getTransactions();
 	});
 
+	function checkAmount() {
+		return debitAmounts.reduce((prev, current) => prev + current, 0) == creditAmounts.reduce((prev, current) => prev + current, 0)
+	}
+
 	async function addTransaction() {
-		if (
-			debitAmounts.reduce((prev, current) => prev + current, 0) !=
-			creditAmounts.reduce((prev, current) => prev + current, 0)
-		) {
+		if (!checkAmount()) {
 			addToastNotification({
 				type: 'error',
 				title: '借方と貸方の金額が一致しません',
@@ -132,7 +152,7 @@
 			body: JSON.stringify({
 				book_id: bookId,
 				description: description,
-				occured_at: occurredAt,
+				occurred_at: occurredAt,
 				sub_transactions: [
 					...debitAmounts.map((amount, index) => {
 						return {
@@ -747,7 +767,11 @@
 	{#if book}
 		<Row>
 			<Column>
-				<h2>{book.year}年度 {book.name}会計</h2>
+				<h2>
+					<Button iconDescription="戻る" icon={ArrowLeft} kind="ghost" on:click={() => goto(`/book`)}/> 
+					{book.year}年度 {book.name}会計
+					<Button kind="ghost" iconDescription="設定" icon={Settings} on:click={() => goto(`/book/${bookId}/settings`)}/>
+				</h2>
 			</Column>
 		</Row>
 	{:else}
@@ -761,14 +785,7 @@
 	<Row>
 		<Column>
 			<h3>貸借対照表</h3>
-		</Column>
-		<Column>
-			<h3>収支表</h3>
-		</Column>
-	</Row>
-	<br />
-	<Row>
-		<Column>
+			<br/>
 			{#if balanceSheetRows.length === 0}
 				<DataTableSkeleton size="short" headers={assetAndLiabilityHeaders} rows={5} />
 			{:else}
@@ -797,6 +814,8 @@
 			{/if}
 		</Column>
 		<Column>
+			<h3>収支表</h3>
+			<br/>
 			{#if profitAndLossRows.length === 0}
 				<DataTableSkeleton size="short" headers={profitAndLossHeaders} rows={5} />
 			{:else}
@@ -918,7 +937,8 @@
 		debitAmounts.includes(0) ||
 		creditAmounts.includes(0) ||
 		description == '' ||
-		date == ''
+		date == '' || 
+		!checkAmount()
 	}
 	on:click:button--secondary={() => (open = false)}
 	on:open
@@ -963,6 +983,7 @@
 						icon={Add}
 						on:click={() => {
 							selectedDebitTitles = [...selectedDebitTitles, 0];
+							selectedBigDebitTitles = [...selectedBigDebitTitles, 0];
 						}}
 					>
 						借方追加
@@ -971,18 +992,43 @@
 			</Row>
 			{#each selectedDebitTitles as _, index}
 				<Row>
-					<Column>
+					<Column sm={4} md={4} lg={4}>
 						<Dropdown
-							titleText="勘定科目"
+							titleText="勘定科目(大区分)"
+							invalid={selectedBigDebitTitles[index] == -1}
+							invalidText="選択してください"
+							selectedId={selectedBigDebitTitles[index]}
+							items={[
+								...bigAccountTitles
+									.filter((title) =>
+										title.id > 9 
+											? title.id % 2 == 0
+											: true
+									)
+									.map((title) => {
+										return {
+											id: title.id,
+											text: title.text
+										};
+									}),
+								{ id: -1, text: '選択' }
+							]}
+							on:select={(e) => {
+								selectedBigDebitTitles[index] = e.detail.selectedId;
+								selectedBigDebitTitles = [...selectedBigDebitTitles];
+							}}
+						/>
+					</Column>
+					<Column sm={4} md={4} lg={4}>
+						<Dropdown
+							titleText="勘定科目(小区分)"
 							invalid={selectedDebitTitles[index] == 0}
 							invalidText="選択してください"
 							selectedId={selectedDebitTitles[index]}
 							items={[
 								...accountTitles
 									.filter((title) =>
-										title.type == 2 || title.type == 3
-											? title.type % 2 == 0
-											: true
+										title.type == selectedBigDebitTitles[index]
 									)
 									.map((title) => {
 										return {
@@ -998,7 +1044,7 @@
 							}}
 						/>
 					</Column>
-					<Column>
+					<Column sm={4} md={4} lg={4}>
 						<TextInput
 							id="amount"
 							labelText="金額"
@@ -1007,6 +1053,16 @@
 							bind:value={debitAmounts[index]}
 							required
 						/>
+					</Column>
+					<Column sm={1} md={1} lg={1} padding>
+						<Button kind="danger-ghost" size="default" icon={Subtract} on:click={() => {
+							selectedDebitTitles.splice(index, 1);
+							selectedBigDebitTitles.splice(index, 1);
+							debitAmounts.splice(index, 1);
+							selectedDebitTitles = [...selectedDebitTitles];
+							selectedBigDebitTitles = [...selectedBigDebitTitles];
+							debitAmounts = [...debitAmounts];
+						}}/>
 					</Column>
 				</Row>
 			{/each}
@@ -1020,6 +1076,7 @@
 						icon={Add}
 						on:click={() => {
 							selectedCreditTitles = [...selectedCreditTitles, 0];
+							selectedBigCreditTitles = [...selectedBigCreditTitles, 0];
 						}}
 					>
 						貸方追加
@@ -1028,18 +1085,43 @@
 			</Row>
 			{#each selectedCreditTitles as _, index}
 				<Row>
-					<Column>
+					<Column sm={4} md={4} lg={4}>
 						<Dropdown
-							titleText="勘定科目"
+							titleText="勘定科目(大区分)"
+							invalid={selectedBigCreditTitles[index] == -1}
+							invalidText="選択してください"
+							selectedId={selectedBigCreditTitles[index]}
+							items={[
+								...bigAccountTitles
+									.filter((title) =>
+										title.id > 9 
+											? title.id % 2 == 1
+											: true
+									)
+									.map((title) => {
+										return {
+											id: title.id,
+											text: title.text
+										};
+									}),
+								{ id: -1, text: '選択' }
+							]}
+							on:select={(e) => {
+								selectedBigCreditTitles[index] = e.detail.selectedId;
+								selectedBigCreditTitles = [...selectedBigCreditTitles];
+							}}
+						/>
+					</Column>
+					<Column sm={4} md={4} lg={4}>
+						<Dropdown
+							titleText="勘定科目(小区分)"
 							invalid={selectedCreditTitles[index] == 0}
 							invalidText="選択してください"
 							selectedId={selectedCreditTitles[index]}
 							items={[
 								...accountTitles
 									.filter((title) =>
-										title.type > 9 
-											? title.type % 2 == 1
-											: true
+										title.type == selectedBigCreditTitles[index]
 									)
 									.map((title) => {
 										return {
@@ -1055,7 +1137,7 @@
 							}}
 						/>
 					</Column>
-					<Column>
+					<Column sm={4} md={4} lg={4}>
 						<TextInput
 							id="amount"
 							labelText="金額"
@@ -1064,6 +1146,16 @@
 							bind:value={creditAmounts[index]}
 							required
 						/>
+					</Column>
+					<Column sm={1} md={1} lg={1} padding>
+						<Button kind="danger-ghost" size="default" icon={Subtract} on:click={() => {
+							selectedCreditTitles.splice(index, 1);
+							selectedBigCreditTitles.splice(index, 1);
+							creditAmounts.splice(index, 1);
+							selectedCreditTitles = [...selectedCreditTitles];
+							selectedBigCreditTitles = [...selectedBigCreditTitles];
+							creditAmounts = [...creditAmounts];
+						}}/>
 					</Column>
 				</Row>
 			{/each}
@@ -1104,21 +1196,7 @@
 			<Dropdown
 				titleText="区分"
 				selectedId={selectedAddAccountTitleType}
-				items={[
-					{ id: 0, text: '流動資産' },
-					{ id: 1, text: '流動負債' },
-					{ id: 2, text: '固定資産' },
-					{ id: 3, text: '固定負債' },
-					{ id: 5, text: '資本' },
-					{ id: 10, text: '営業費用' },
-					{ id: 11, text: '営業利益' },
-					{ id: 12, text: '仕入費用' },
-					{ id: 13, text: '営業外利益' },
-					{ id: 14, text: '営業外費用' },
-					{ id: 15, text: '特別利益' },
-					{ id: 16, text: '特別損失' },
-					{ id: 18, text: '税金' }
-				]}
+				items={bigAccountTitles}
 				on:select={(e) => {
 					selectedAddAccountTitleType = e.detail.selectedId;
 				}}

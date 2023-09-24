@@ -1,5 +1,5 @@
 export type APIUser = {
-    id: number;
+    id: string;
     name: string;
     email: string;
 };
@@ -39,6 +39,14 @@ export type APISubTransaction = {
     account_title_id: number;
     account_title: APIAccountTitle;
     amount: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export type APIBookAuthorization = {
+    book_id: string;
+    user_id: string;
+    authority: string;
     created_at: string;
     updated_at: string;
 }
